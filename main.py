@@ -9,10 +9,18 @@ class DrawingApp:
         
         self.canvas = tk.Canvas(root, bg="white", width=800, height=600)
         self.canvas.pack(fill=tk.BOTH, expand=True)
+
+        self.mode = "draw" #por padrão
         
         # Frame para os botões
         self.button_frame = tk.Frame(root)
         self.button_frame.pack(fill=tk.X)
+
+        self.eraser_btn = tk.Button(self.button_frame, text="Borracha", command=self.set_eraser_mode, bg="#A8EEFF")
+        self.eraser_btn.pack(side=tk.LEFT, padx=5)
+
+        self.draw_button = tk.Button(self.button_frame, text="Desenhar", command=self.set_draw_mode, bg="#b5e7a9", relief=tk.SUNKEN)
+        self.draw_button.pack(side=tk.LEFT, padx=5)
         
         # Controle de cor
         tk.Label(self.button_frame, text="Color:").pack(side=tk.LEFT, padx=5)
@@ -39,6 +47,12 @@ class DrawingApp:
         self.last_x = None
         self.last_y = None
 
+    def set_eraser_mode(self):
+        self.mode = "erase"
+
+    def set_draw_mode(self):
+        self.mode = "draw"
+
     def start_drawing(self, event):
         self.drawing = True
         self.last_x = event.x
@@ -46,12 +60,16 @@ class DrawingApp:
 
     def draw(self, event):
         if self.drawing:
-            try:
-                color = self.color_var.get()
-                thickness = self.thickness_var.get()
-            except Exception:
-                color = "black"
-                thickness = 2
+            if self.mode == "erase":
+                color = "white"
+                thickness = 15
+            else:
+                try:
+                    color = self.color_var.get()
+                    thickness = self.thickness_var.get()
+                except Exception:
+                    color = "black"
+                    thickness = 2
             
             x, y = event.x, event.y
             if self.last_x is not None and self.last_y is not None:
