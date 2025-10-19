@@ -2,7 +2,7 @@ import socket
 
 PORT = 5050
 # é necessário colocar o IP da máquina em que o servidor está
-SERVER = "192.168.15.24"
+SERVER = " "
 ADDR = (SERVER, PORT)
 HEADER = 64
 FORMAT = 'utf-8'
@@ -29,4 +29,5 @@ def send(msg):
 send("AAAAAAAAAAAAAA")
 send("OOOOOOOOOOOOOOOOO")
 send("EEEEEEEEEEEEEE")
+
 send(DISCONNECT_MESSAGE)
