@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox
 from save_png import save_canvas_as_png  # importar a função de salvamento
+import os
+import time
 
 class DrawingApp:
     def __init__(self, root):
@@ -37,6 +39,9 @@ class DrawingApp:
         
         # Botão para salvar como PNG
         tk.Button(self.button_frame, text="Save as PNG", command=self.save_as_png).pack(side=tk.LEFT, padx=5)
+        
+        # Botão para enviar para outra pessoa
+        tk.Button(self.button_frame, text="Enviar Imagem", command=self.send_image).pack(side=tk.LEFT, padx=5)
         
         # Bind events para desenho
         self.canvas.bind("<Button-1>", self.start_drawing)
@@ -102,6 +107,76 @@ class DrawingApp:
             messagebox.showinfo("Success", f"Drawing saved as {file_path}")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to save file: {e}")
+    
+    def send_image(self):
+        try:
+            # Obtém o diretório atual onde o código está rodando
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            
+            # Gera nomes de arquivo com timestamp para evitar sobrescrever
+            timestamp = str(int(time.time()))
+            png_filename = f"drawing_{timestamp}.png"
+            bytes_filename = f"drawing_bytes_{timestamp}.bin"
+            
+            png_filepath = os.path.join(current_dir, png_filename)
+            bytes_filepath = os.path.join(current_dir, bytes_filename)
+            
+            # Salva a imagem PNG localmente
+            try:
+                save_canvas_as_png(self.canvas, png_filepath)
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to save PNG file: {e}")
+                return
+            
+            # Lê a imagem salva e converte para bytes
+            with open(png_filepath, "rb") as file:
+                image_bytes = file.read()
+            
+            # Salva os bytes em um arquivo separado
+            with open(bytes_filepath, "wb") as bytes_file:
+                bytes_file.write(image_bytes)
+            
+            # Mostra informações sobre os arquivos salvos
+            messagebox.showinfo("Success", 
+                            f"PNG saved as: {png_filename}\n"
+                            f"Bytes saved as: {bytes_filename}\n"
+                            f"Size: {len(image_bytes)} bytes\n"
+                            f"Location: {current_dir}")
+            
+            print(f"Image saved as PNG: {png_filepath}")
+            print(f"Image bytes saved as: {bytes_filepath}")
+            print(f"Image size: {len(image_bytes)} bytes")
+            
+            # ------------- CONVERTE BIN PARA .PNG ----------
+            try:
+                # Lê o arquivo .bin
+                with open(bytes_filepath, "rb") as bin_file:
+                    recovered_bytes = bin_file.read()
+                
+                # Salva como uma nova imagem para testar
+                test_filename = f"test_recovered_{timestamp}.png"
+                test_filepath = os.path.join(current_dir, test_filename)
+                
+                with open(test_filepath, "wb") as test_file:
+                    test_file.write(recovered_bytes)
+                
+                # Mostra resultado do teste
+                messagebox.showinfo("Conversion Test", 
+                                f"Bytes successfully converted back to image!\n"
+                                f"Test file: {test_filename}\n"
+                                f"File size: {len(recovered_bytes)} bytes")
+                
+                print(f"Test recovery successful: {test_filepath}")
+                print(f"Recovered file size: {len(recovered_bytes)} bytes")
+                
+            except Exception as e:
+                messagebox.showerror("Conversion Test Error", 
+                                    f"Failed to convert bytes back to image: {e}")
+                print(f"Conversion test failed: {e}")
+        
+        
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to process image: {e}")
 
 if __name__ == "__main__":
     root = tk.Tk()
