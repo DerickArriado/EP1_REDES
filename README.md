@@ -15,3 +15,12 @@ O jogador utiliza o canvas para desenha
 **Valida:** aquele que desenhou recebe o palpite e confirma se está certo ou errado
 
 **Pontuação:** quem atingir 3 pontos ganha
+
+## Infos
+
+- salvar imagem
+- lógica para envio de imagens em formato de bytes
+- lógica do jogo, em geral
+
+- [Reading and Writing Imgaes and Videos](https://www.opencv.org.cn/opencvdoc/2.3.2/html/modules/highgui/doc/reading_and_writing_images_and_video.html)
+- [Image send via TCP](https://stackoverflow.com/questions/20820602/image-send-via-tcp)

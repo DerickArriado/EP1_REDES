@@ -41,7 +41,8 @@ def handle_client(conn, addr):
 
     # fecha a conexão
     conn.close()
-    clientes.remove(conn)
+    if conn in clientes:
+        clientes.remove(conn)
 
 
 def busca_clientes():
@@ -52,8 +53,17 @@ def busca_clientes():
         threading.Thread(target=handle_client, args=(conn, addr)).start()
 
 def server_is_alive():
-    for cliente in clientes:
-       mensagens.enviar(cliente, mensagens.ALIVE_MESSAGE)
+    for cliente in clientes[:]:  # cópia da lista para evitar problemas ao remover
+        try:
+            mensagens.enviar(cliente, mensagens.ALIVE_MESSAGE)
+        except (BrokenPipeError, ConnectionResetError, OSError):
+            try:
+                peer = cliente.getpeername()
+                print(f"|Erro ao enviar para cliente| {peer} desconectado")
+            except OSError:
+                print("|Erro ao enviar para cliente| Cliente já desconectado")
+            if cliente in clientes:
+                clientes.remove(cliente)
 
 def timer():
     tempo = time.time()

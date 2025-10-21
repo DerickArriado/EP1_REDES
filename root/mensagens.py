@@ -3,11 +3,11 @@ HEADER = 64
 # formato em que a mensagem deve ser decifrada e codificada
 FORMAT = 'utf-8'
 # mensagens padrão
-DISCONNECT_MESSAGE = "!DISCONNECT"
-ALIVE_MESSAGE = "!ALIVE"
-
 
 class Mensagens:
+    DISCONNECT_MESSAGE = "!DISCONNECT"
+    ALIVE_MESSAGE = "!ALIVE"
+
     def __init__(self):
         pass
 
