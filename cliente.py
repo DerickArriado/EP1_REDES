@@ -109,9 +109,19 @@ def listen_for_server(client_socket):
     client_socket.close()
     client_connected = False
 
+IS_GUESSER = False
+# para alternação entre o modo desengista e adivinhador
+if len(sys.argv) > 1 and sys.argv[1].lower == '--guesser':
+    IS_GUESSER = True
+    print("Modo: ADIVINHADOR (Guesser)")
+else:
+    print("Modo: DESENHISTA (Drawer)")
+
 root = tk.Tk()
 app = drawing_app.DrawingApp(root, client, mensagens_handler, gui_queue)
-#app.set_guesser_mode() # descomentar caso este cliente deve ser o adivinhador
+
+if IS_GUESSER:
+    app.set_guesser_mode()
 
 # iniciar mecanismo de polling da GUI
 app.check_gui_queue()
