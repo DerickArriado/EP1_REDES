@@ -2,11 +2,17 @@ import tkinter as tk
 from chat_widget import ChatWidget
 from image_handler import ImageHandler
 from drawing_tools import DrawingTools
+from PIL import Image, ImageTk
+import os
+import queue
 
 class DrawingApp:
-    def __init__(self, root):
+    def __init__(self, root, client_socket, msg_handler, event_queue):
         self.root = root
         self.root.title("Drawing App")
+        self.client = client_socket
+        self.msg_handler = msg_handler
+        self.event_queue = event_queue
         
         # Inicializa o canvas
         self.canvas = tk.Canvas(root, bg="white", width=800, height=600)
@@ -15,11 +21,15 @@ class DrawingApp:
         # Inicializa componentes
         self.setup_toolbar()
         self.drawing_tools = DrawingTools(self.canvas)
-        self.image_handler = ImageHandler(self.canvas)
+        self.image_handler = ImageHandler(self.canvas, self.client, self.msg_handler)
         self.chat_widget = ChatWidget(root)
         
         # Configura bindings
         self.setup_bindings()
+
+        # armazena imagem recebida
+        self.photo_image = None
+        self.image_item_id = None # ID do objeto no canvas para a imagem enviada
 
     def setup_toolbar(self):
         """Configura a barra de ferramentas"""
@@ -78,3 +88,70 @@ class DrawingApp:
 
     def send_image(self):
         self.image_handler.send_image()
+    
+    def set_guesser_mode(self):
+        """Prepara a GUI para o modo Adivinhador (Guesser)."""
+        self.drawing_tools.set_mode("none") # Desabilita a drawing_tools
+        
+        # 🌟 Opcional: Desabilita botões de desenho/salvar
+        self.draw_button.config(state=tk.DISABLED)
+        self.eraser_btn.config(state=tk.DISABLED)
+        # Limpa o canvas para a imagem recebida
+        self.canvas.delete("all")
+        
+        print("GUI em modo Adivinhador. Esperando imagem...")
+    
+    def check_gui_queue(self):
+        """Verifica a fila de eventos da thread de rede e processa-os."""
+        try:
+            while True:
+                # Tenta pegar um item da fila (sem bloqueio)
+                event = self.event_queue.get_nowait()
+                
+                if event['type'] == 'IMAGE_RECEIVED':
+                    self.load_image_to_canvas(event['path'])
+                
+                # Adicione outros tipos de eventos de rede aqui (ex: CHAT_MESSAGE)
+                
+        except queue.Empty:
+            pass # Nenhuma mensagem na fila, tudo bem.
+        
+        # Chama a si mesmo novamente após 100 milissegundos (Polling)
+        self.root.after(100, self.check_gui_queue)
+    
+    def load_image_to_canvas(self, image_path):
+        """Carrega e exibe a imagem no canvas do modo Adivinhador."""
+        try:
+            # Remove a imagem anterior, se houver
+            if self.image_item_id:
+                self.canvas.delete(self.image_item_id)
+            
+            # 1. Abre a imagem usando Pillow
+            original_image = Image.open(image_path)
+            
+            # 2. Redimensiona a imagem para caber no canvas (opcional, mas recomendado)
+            canvas_width = self.canvas.winfo_width()
+            canvas_height = self.canvas.winfo_height()
+            
+            # Mantém a proporção (simples)
+            original_image.thumbnail((canvas_width, canvas_height))
+            
+            # 3. Converte para um objeto que o Tkinter pode usar
+            self.photo_image = ImageTk.PhotoImage(original_image)
+            
+            # 4. Exibe a imagem no centro do canvas
+            x_center = canvas_width // 2
+            y_center = canvas_height // 2
+            
+            self.image_item_id = self.canvas.create_image(
+                x_center, y_center, 
+                image=self.photo_image, 
+                anchor=tk.CENTER
+            )
+            
+            print(f"Imagem carregada no canvas a partir de {image_path}")
+            
+        except FileNotFoundError:
+            print(f"ERRO: Arquivo de imagem não encontrado em {image_path}")
+        except Exception as e:
+            print(f"ERRO ao carregar imagem no canvas: {e}")

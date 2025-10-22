@@ -2,10 +2,15 @@ import os
 import time
 from tkinter import filedialog, messagebox
 from save_png import save_canvas_as_png
+import mensagens
+
+mensagens_handle = mensagens.Mensagens()
 
 class ImageHandler:
-    def __init__(self, canvas):
+    def __init__(self, canvas, client_socket, msg_handler):
         self.canvas = canvas
+        self.client = client_socket
+        self.mensagens = msg_handler
 
     def save_as_png(self):
         """Salva o canvas como PNG"""
@@ -23,46 +28,32 @@ class ImageHandler:
             messagebox.showerror("Error", f"Failed to save file: {e}")
 
     def send_image(self):
-        """Salva a imagem localmente e converte para bytes"""
+        """Salva a imagem localmente e a envia pelo socket"""
         try:
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-            timestamp = str(int(time.time()))
+            # 1. Salvar PNG para obter os bytes (simplificado para o essencial)
+            temp_filepath = "temp_drawing_to_send.png" # Salva temporariamente
+            save_canvas_as_png(self.canvas, temp_filepath)
             
-            png_filename = f"drawing_{timestamp}.png"
-            bytes_filename = f"drawing_bytes_{timestamp}.bin"
-            
-            png_filepath = os.path.join(current_dir, png_filename)
-            bytes_filepath = os.path.join(current_dir, bytes_filename)
-            
-            # Salva PNG
-            try:
-                save_canvas_as_png(self.canvas, png_filepath)
-            except Exception as e:
-                messagebox.showerror("Error", f"Failed to save PNG: {e}")
-                return
-            
-            # Converte para bytes
-            with open(png_filepath, "rb") as file:
+            with open(temp_filepath, "rb") as file:
                 image_bytes = file.read()
             
-            # Salva bytes
-            with open(bytes_filepath, "wb") as bytes_file:
-                bytes_file.write(image_bytes)
+            # 2. Enviar sinalização de início de imagem (texto)
+            mensagens_handle.enviar(self.client, mensagens_handle.IMAGE_START_MESSAGE)
             
-            # Mostra informações
-            messagebox.showinfo("Success", 
-                               f"PNG: {png_filename}\n"
-                               f"Bytes: {bytes_filename}\n"
-                               f"Size: {len(image_bytes)} bytes")
+            # 3. Enviar o tamanho da imagem (já tratado pelo enviar_binario)
+            # 4. Enviar a imagem em bytes (BINÁRIO)
+            mensagens_handle.enviar_bytes(self.client, image_bytes)
             
-            print(f"PNG saved: {png_filepath}")
-            print(f"Bytes saved: {bytes_filepath}")
+            # 5. Enviar sinalização de fim de imagem (texto)
+            mensagens_handle.enviar(self.client, mensagens_handle.IMAGE_END_MESSAGE)
             
-            # Testa conversão de volta
-            self.test_bytes_conversion(bytes_filepath, timestamp, current_dir)
+            messagebox.showinfo("Success", f"Image sent! Size: {len(image_bytes)} bytes")
+            
+            # Opcional: remover arquivo temporário
+            os.remove(temp_filepath)
             
         except Exception as e:
-            messagebox.showerror("Error", f"Failed to process image: {e}")
+            messagebox.showerror("Error", f"Failed to send image: {e}")
 
     def test_bytes_conversion(self, bytes_filepath, timestamp, current_dir):
         """Testa converter bytes de volta para imagem"""

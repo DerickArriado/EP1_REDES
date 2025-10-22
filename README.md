@@ -16,6 +16,11 @@ O jogador utiliza o canvas para desenha
 
 **Pontuação:** quem atingir 3 pontos ganha
 
+## Execução do código
+- rodar o `servidor.py`
+- rodar o `cliente.py`
+- em `cliente.py` descomentar o `app.set_guesser_mode()` e executar novamente
+
 ## Infos
 
 - salvar imagem
