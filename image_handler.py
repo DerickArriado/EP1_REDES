@@ -30,26 +30,26 @@ class ImageHandler:
     def send_image(self):
         """Salva a imagem localmente e a envia pelo socket"""
         try:
-            # 1. Salvar PNG para obter os bytes (simplificado para o essencial)
+            # salvar PNG para obter os bytes (simplificado para o essencial)
             temp_filepath = "temp_drawing_to_send.png" # Salva temporariamente
             save_canvas_as_png(self.canvas, temp_filepath)
             
             with open(temp_filepath, "rb") as file:
                 image_bytes = file.read()
             
-            # 2. Enviar sinalização de início de imagem (texto)
+            # enviar sinalização de início de imagem (texto)
             mensagens_handle.enviar(self.client, mensagens_handle.IMAGE_START_MESSAGE)
             
-            # 3. Enviar o tamanho da imagem (já tratado pelo enviar_binario)
-            # 4. Enviar a imagem em bytes (BINÁRIO)
+            # enviar o tamanho da imagem (já tratado pelo enviar_binario)
+            # enviar a imagem em bytes (BINÁRIO)
             mensagens_handle.enviar_bytes(self.client, image_bytes)
             
-            # 5. Enviar sinalização de fim de imagem (texto)
+            # enviar sinalização de fim de imagem (texto)
             mensagens_handle.enviar(self.client, mensagens_handle.IMAGE_END_MESSAGE)
             
             messagebox.showinfo("Success", f"Image sent! Size: {len(image_bytes)} bytes")
             
-            # Opcional: remover arquivo temporário
+            # opcional: remover arquivo temporário
             os.remove(temp_filepath)
             
         except Exception as e:
