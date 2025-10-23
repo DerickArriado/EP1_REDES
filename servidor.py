@@ -8,12 +8,12 @@ PORT = 5050
 SERVER = socket.gethostbyname(socket.gethostname())
 ADDR = (SERVER, PORT)
 
-
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind(ADDR)
 
+# nova instância do sistema que controla o envio de mensagens
 mensagens = mensagens.Mensagens()
-
+# lista que contém todos os clientes
 clientes = []
 
 def handle_client(conn, addr):
@@ -96,51 +96,58 @@ def retransmitir_img(sender_conn, image_bytes):
             except Exception as e:
                 print(f"Erro ao retransmitir imagem: {e}")
 
-
+# busca continuamente por possíveis tentativas de conexões de clientes
 def busca_clientes():
     while True:
+        # aceita pedidos de conexão com o servidor
         conn, addr = server.accept()
+        # coloca o tempo máximo de timeout do socket como 5 segundos
         conn.settimeout(5)
+        # adiciona o cliente na lista de clientes
         clientes.append(conn)
+        # inicia uma thread para executar as funções relacionadas a cada cliente
         threading.Thread(target=handle_client, args=(conn, addr)).start()
 
+# envia uma confirmação de que o servidor está a funcionar para todos os clientes
 def server_is_alive():
     for cliente in clientes[:]:  # cópia da lista para evitar problemas ao remover
         try:
             mensagens.enviar(cliente, mensagens.ALIVE_MESSAGE)
         except (BrokenPipeError, ConnectionResetError, OSError):
-            try:
-                peer = cliente.getpeername()
-                print(f"|Erro ao enviar para cliente| {peer} desconectado")
-            except OSError:
-                print("|Erro ao enviar para cliente| Cliente já desconectado")
-            if cliente in clientes:
-                clientes.remove(cliente)
+            pass
 
+# imprime informações relevantes do servidor
+def status():
+    # escreve o número de conexões ativas e o horário em que a verificação foi feita
+    status_msg = f"|Conexões Ativas|: {threading.active_count() - 3} | Última verificação: {time.strftime('%H:%M:%S')}"
+    # sobrescreve o texto antigo com os valores atuais
+    sys.stdout.write('\r' + status_msg + ' ' * 10)
+    sys.stdout.flush()
+
+# executa funções a cada segundo
 def timer():
     tempo = time.time()
     while True:
+        # verifica se um segundo decorreu ou não
         tempoAtual = time.time()
         if tempoAtual - tempo > 1:
             tempo = tempoAtual
             server_is_alive()
-            status_msg = f"|Conexões Ativas|: {threading.active_count() - 3} | Última verificação: {time.strftime('%H:%M:%S')}"
+            status()
+            # faz a thread dormir para não sobrecarregar o processador
+            time.sleep(0.1)
 
-            # sys.stdout.write com '\r' para sobrescrever a linha
-            # ' ' * 10 é para limpar qualquer lixo da linha anterior
-            sys.stdout.write('\r' + status_msg + ' ' * 10)
-
-            sys.stdout.flush()
-        time.sleep(0.1)
-
+# cria as threads do servidor
 def criar_threads():
     threading.Thread(target=timer).start()
     threading.Thread(target=busca_clientes).start()
 
+#inicia o servidor
 def start():
+    # chama funções para que o servidor funcione corretamente
     server.listen()
     criar_threads()
-    tempo = time.time()
+    # imprime o IP do servidor
     print(f"|Servidor esperando Mensagens em: {SERVER}|")
 
 print("---Iniciando o servidor---")
