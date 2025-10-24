@@ -1,15 +1,21 @@
+import socket
+
 # tamanho máximo de uma mensagem
 HEADER = 64
 # formato em que a mensagem do tipo TEXTO deve ser decifrada e codificada
 FORMAT = 'utf-8'
+
 # mensagens padrão
-import socket
+DISCONNECT_MESSAGE = "!DISCONNECT"
+ALIVE_MESSAGE = "!ALIVE"
+SENDING_IMAGE = "!SENDING_IMAGE"
+PRONTO_PARA_JOGAR = "!PRONTO_PARA_JOGAR"
+PARTIDA_INICIADA = "!PARTIDA_INICIADA"
+PARTIDA_ENCERRADA = "!PARTIDA_ENCERRADA"
+ESPERANDO_IMAGEM = "!ESPERANDO_IMAGEM"
+ESPERANDO_ADIVINHACAO = "!ESPERANDO_ADIVINHAÇÃO"
 
 class Mensagens:
-    DISCONNECT_MESSAGE = "!DISCONNECT"
-    ALIVE_MESSAGE = "!ALIVE"
-    IMAGE_START_MESSAGE = "!IMAGE_START"
-    IMAGE_END_MESSAGE = "!IMAGE_END"
 
     def __init__(self):
         pass
