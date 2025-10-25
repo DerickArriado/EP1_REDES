@@ -62,7 +62,6 @@ def iniciar_partida(primeiro_cliente, segundo_cliente):
     while partida_em_progresso:
         # verifica se os dois clientes estão conectados
         if primeiro_cliente not in clientes_jogando or segundo_cliente not in clientes_jogando:
-            encerrar_partida(primeiro_cliente, segundo_cliente)
             partida_em_progresso = False
             print(f"|Partida encerrada| {primeiro_cliente.get_addr()} ou {segundo_cliente.get_addr()} se desconectou")
         else:
@@ -85,25 +84,37 @@ def iniciar_partida(primeiro_cliente, segundo_cliente):
                     elif not primeiro_cliente.esperando_imagem():
                         primeiro_cliente.pedir_imagem()
                 case 1:
-                    pontos_segundo = adivinhar()
-                    etapa = 2
-                    primeiro_cliente.deletar_imagem()
-                    print(f"Pontos de {primeiro_cliente.get_addr()}: {pontos_primeiro}")
+                    if segundo_cliente.possui_adivinhacao():
+                        pontos_segundo = adivinhar()
+                        etapa = 2
+                        primeiro_cliente.deletar_imagem()
+                        segundo_cliente.deletar_adivinhacao()
+                        print(f"Pontos de {segundo_cliente.get_addr()}: {pontos_segundo}")
+                    elif not segundo_cliente.esperando_adivinhacao():
+                        segundo_cliente.pedir_adivinhacao()
                 case 2:
                     if segundo_cliente.possui_imagem():
                         etapa = 3
                     elif not segundo_cliente.esperando_imagem():
                         segundo_cliente.pedir_imagem()
                 case 3:
-                    pontos_primeiro = adivinhar()
-                    etapa = 4
-                    segundo_cliente.deletar_imagem()
-                    print(f"Pontos de {segundo_cliente.get_addr()}: {pontos_segundo}")
+                    if primeiro_cliente.possui_adivinhacao():
+                        pontos_primeiro = adivinhar()
+                        etapa = 4
+                        segundo_cliente.deletar_imagem()
+                        primeiro_cliente.deletar_adivinhacao()
+                        print(f"Pontos de {primeiro_cliente.get_addr()}: {pontos_primeiro}")
+                    elif not primeiro_cliente.esperando_adivinhacao():
+                        primeiro_cliente.pedir_adivinhacao()
 
     encerrar_partida(primeiro_cliente, segundo_cliente)
 
-def adivinhar():
-    pass
+def adivinhar(adivinhador, verificador, img):
+    adivinhador.enviar_texto(mensagens.ENVIANDO_IMAGEM)
+    adivinhador.enviar_imagem(img)
+    adivinhador.enviar_texto(mensagens.ESPERANDO_ADIVINHACAO)
+
+
 
 def handle_client(cliente):
     conectado = True
@@ -129,6 +140,15 @@ def handle_client(cliente):
 
                 case mensagens.ENVIANDO_IMAGEM:
                     cliente.receber_imagem()
+
+                case mensagens.ENVIANDO_ADIVINHACAO:
+                    cliente.receber_adivinhacao()
+
+                case mensagens.ADIVINHACAO_CORRETA:
+                    cliente.veredito_correto()
+
+                case mensagens.ADIVINHACAO_ERRADA:
+                    cliente.veredito_errado()
 
 # busca continuamente por possíveis tentativas de conexões de clientes
 def busca_clientes():
@@ -188,7 +208,6 @@ def start():
 
 print("---Iniciando o servidor---")
 start()
-
 
 
 
