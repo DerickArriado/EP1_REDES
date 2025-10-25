@@ -60,23 +60,25 @@ def iniciar_partida(primeiro_cliente, segundo_cliente):
     etapa = 0
     partida_em_progresso = True
     while partida_em_progresso:
-        # avisa que as partidas estão em andamento
-        primeiro_cliente.partida_em_andamento()
-        segundo_cliente.partida_em_andamento()
         # verifica se os dois clientes estão conectados
         if primeiro_cliente not in clientes_jogando or segundo_cliente not in clientes_jogando:
             encerrar_partida(primeiro_cliente, segundo_cliente)
             partida_em_progresso = False
             print(f"|Partida encerrada| {primeiro_cliente.get_addr()} ou {segundo_cliente.get_addr()} se desconectou")
         else:
+            # avisa que a partida está em andamento
+            primeiro_cliente.partida_em_andamento()
+            segundo_cliente.partida_em_andamento()
             match etapa:
-                case 7:
+                case 4:
                     if pontos_primeiro > pontos_segundo:
                         print(f"{primeiro_cliente.get_addr()} ganhou!")
                         partida_em_progresso = False
                     elif pontos_segundo > pontos_primeiro:
                         print(f"{segundo_cliente.get_addr()} ganhou!")
                         partida_em_progresso = False
+                    else:
+                        etapa = 0
                 case 0:
                     if primeiro_cliente.possui_imagem():
                         etapa = 1
@@ -89,12 +91,12 @@ def iniciar_partida(primeiro_cliente, segundo_cliente):
                     print(f"Pontos de {primeiro_cliente.get_addr()}: {pontos_primeiro}")
                 case 2:
                     if segundo_cliente.possui_imagem():
-                        etapa = 1
+                        etapa = 3
                     elif not segundo_cliente.esperando_imagem():
                         segundo_cliente.pedir_imagem()
                 case 3:
                     pontos_primeiro = adivinhar()
-                    etapa = 3
+                    etapa = 4
                     segundo_cliente.deletar_imagem()
                     print(f"Pontos de {segundo_cliente.get_addr()}: {pontos_segundo}")
 
@@ -186,6 +188,7 @@ def start():
 
 print("---Iniciando o servidor---")
 start()
+
 
 
 
