@@ -1,15 +1,15 @@
 import mensagens
 
-# instância do sistema que controla o envio de mensagens
-mensagens = mensagens.Mensagens()
-
 class ClienteServidor:
 
     def __init__(self, conn, addr):
         self.conn = conn
         self.addr = addr
         self.vivo = 5
-        self.recebendo_imagem = False
+        self.esperando_imagem = False
+        self.img = b""
+        self.adivinhacao = ""
+        self.pontos = 0
 
     def fechar_conexao(self):
         self.conn.close()
@@ -22,13 +22,20 @@ class ClienteServidor:
         return True
 
     def servidor_vivo(self):
-        mensagens.enviar(self.conn, mensagens.ALIVE_MESSAGE)
+        mensagens.enviar_texto(self.conn, mensagens.ALIVE_MESSAGE)
 
     def partida_iniciada(self):
-        mensagens.enviar(self.conn, mensagens.PARTIDA_INICIADA)
+        mensagens.enviar_texto(self.conn, mensagens.PARTIDA_INICIADA)
+
+    def partida_em_andamento(self):
+        mensagens.enviar_texto(self.conn, mensagens.PARTIDA_EM_ANDAMENTO)
 
     def partida_encerrada(self):
-        mensagens.enviar(self.conn, mensagens.PARTIDA_ENCERRADA)
+        mensagens.enviar_texto(self.conn, mensagens.PARTIDA_ENCERRADA)
+
+    def pedir_imagem(self):
+        mensagens.enviar_texto(self.conn, mensagens.ESPERANDO_IMAGEM)
+        self.esperando_imagem = True
 
     def receber_texto(self):
         msg = mensagens.receber(self.conn)
@@ -39,16 +46,27 @@ class ClienteServidor:
         return None
 
     def receber_imagem(self):
-        mensagens.enviar(self.conn, mensagens.ESPERANDO_IMAGEM)
-        img_bytes = mensagens.receber_bytes(self.conn)
-        if img_bytes:
-            print(f"|{self.addr}| Recebido {len(img_bytes)} bytes de imagem.")
-            return img_bytes
-        print("Erro ao receber imagem.")
-        return None
+        self.img = mensagens.receber_imagem(self.conn)
+        self.esperando_imagem = False
+        if self.img:
+            print(f"|{self.addr}| Recebido {len(self.img)} bytes de imagem.")
+
+    def esperando_imagem(self):
+        return self.esperando_imagem
+
+    def possui_imagem(self):
+        if self.img:
+            return True
+        return False
+
+    def deletar_imagem(self):
+        self.img = None
 
     def set_vivo(self, vivo):
         self.vivo = vivo
 
     def get_addr(self):
         return self.addr
+
+    def get_img(self):
+        return self.img

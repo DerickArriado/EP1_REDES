@@ -20,8 +20,6 @@ client.connect(ADDR)
 
 client_connected = True
 
-mensagens_handler = mensagens.Mensagens()
-
 RECEIVED_IMG_PATH = "received_drawing.png"
 
 # fila para comunicação entre threads
@@ -35,7 +33,7 @@ def keep_alive():
         tempoAtual = time.time()
         if tempoAtual - tempo > 2:
             try:
-                mensagens_handler.enviar(client, mensagens_handler.ALIVE_MESSAGE)
+                mensagens.enviar(client, mensagens.ALIVE_MESSAGE)
                 tempo = tempoAtual
             except (socket.error, ConnectionResetError, OSError):
                 # se envio falhar significa q a outra thread ainda não atualizou, e sai
@@ -47,7 +45,7 @@ def keep_alive():
 def receber_e_salvar_imagem(client_socket):
     print("Recebendo imagem do servidor...")
     try:
-        image_bytes = mensagens_handler.receber_bytes(client_socket)
+        image_bytes = mensagens.receber_imagem(client_socket)
         if image_bytes:
             with open(RECEIVED_IMG_PATH, "wb") as f:
                 f.write(image_bytes)
@@ -78,23 +76,23 @@ def listen_for_server(client_socket):
             
         else:
             # MODO TEXTO: Receber comandos ou mensagens
-            msg = mensagens_handler.receber(client_socket)
+            msg = mensagens.receber(client_socket)
             
-            if msg == mensagens_handler.IMAGE_START_MESSAGE:
+            if msg == mensagens.IMAGE_START_MESSAGE:
                 print("Servidor sinalizou início de imagem. Preparando para receber binário.")
                 receiving_image = True
                 continue
                 
-            elif msg == mensagens_handler.IMAGE_END_MESSAGE:
+            elif msg == mensagens.IMAGE_END_MESSAGE:
                 print("Fim da transmissão de imagem.")
                 # A imagem já foi salva na etapa anterior.
                 continue
 
-            elif msg == mensagens_handler.ALIVE_MESSAGE:
+            elif msg == mensagens.ALIVE_MESSAGE:
                 # Mensagem de keep-alive do servidor
                 continue
             
-            elif msg == mensagens_handler.DISCONNECT_MESSAGE:
+            elif msg == mensagens.DISCONNECT_MESSAGE:
                 print("Servidor desconectou.")
                 break
                 
@@ -118,7 +116,7 @@ else:
     print("Modo: DESENHISTA (Drawer)")
 
 root = tk.Tk()
-app = drawing_app.DrawingApp(root, client, mensagens_handler, gui_queue)
+app = drawing_app.DrawingApp(root, client, mensagens, gui_queue)
 
 if IS_GUESSER:
     app.set_guesser_mode()
