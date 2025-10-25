@@ -6,11 +6,13 @@ class ClienteServidor:
         self.conn = conn
         self.addr = addr
         self.vivo = 5
+        self.esperando_veredito = False
         self.esperando_imagem = False
         self.esperando_adivinhacao = False
-        self.img = b""
+        self.veredito = False
+        self.imagem = b""
         self.adivinhacao = ""
-        self.veredito = None
+
 
     def fechar_conexao(self):
         self.conn.close()
@@ -25,32 +27,25 @@ class ClienteServidor:
     def servidor_vivo(self):
         mensagens.enviar_texto(self.conn, mensagens.ALIVE_MESSAGE)
 
+    # avisa o cliente que a partida foi iniciada
     def partida_iniciada(self):
         mensagens.enviar_texto(self.conn, mensagens.PARTIDA_INICIADA)
 
-    def partida_em_andamento(self):
-        mensagens.enviar_texto(self.conn, mensagens.PARTIDA_EM_ANDAMENTO)
-
+    # avisa o cliente que a partida foi encerrada
     def partida_encerrada(self):
         mensagens.enviar_texto(self.conn, mensagens.PARTIDA_ENCERRADA)
 
-    def veredito_correto(self):
-        self.veredito = True
-
-    def veredito_errado(self):
-        self.veredito = False
-
-    def deletar_veredito(self):
-        self.veredito = None
-
+    # avisa o cliente que o servidor precisa que ele envie uma imagem
     def pedir_imagem(self):
         mensagens.enviar_texto(self.conn, mensagens.ESPERANDO_IMAGEM)
         self.esperando_imagem = True
 
+    # avisa o cliente que o servidor precisa que ele envie uma adivinhação
     def pedir_adivinhacao(self):
         mensagens.enviar_texto(self.conn, mensagens.ESPERANDO_ADIVINHACAO)
         self.esperando_adivinhacao = True
 
+    # retorna uma mensagem do cliente
     def receber_texto(self):
         msg = mensagens.receber(self.conn)
         if msg:
@@ -59,13 +54,15 @@ class ClienteServidor:
         print("|Erro ao receber mensagem|")
         return None
 
-    def receber_imagem(self):
-        self.img = mensagens.receber_imagem(self.conn)
+    # recebe uma imagem do cliente e salva na variável img
+    def salvar_imagem(self):
+        self.imagem = mensagens.receber_imagem(self.conn)
         self.esperando_imagem = False
-        if self.img:
-            print(f"|{self.addr}| Recebido {len(self.img)} bytes de imagem.")
+        if self.imagem:
+            print(f"|{self.addr}| Recebido {len(self.imagem)} bytes de imagem.")
 
-    def receber_adivinhacao(self):
+    # recebe uma adivinhação do cliente e salva na variável adivinhação
+    def salvar_adivinhacao(self):
         adivinhacao = self.receber_texto()
         self.esperando_adivinhacao = False
         if self.adivinhacao is not None:
@@ -74,31 +71,19 @@ class ClienteServidor:
         else:
             print("|Erro ao receber adivinhação|")
 
-    def enviar_imagem(self):
-        mensagens.enviar_imagem(self.conn, self.img)
+    def enviar_texto(self, msg):
+        mensagens.enviar_texto(self.conn, msg)
 
-    def enviar_adivinhacao(self):
-        mensagens.enviar_texto(self.conn, mensagens.ENVIANDO_ADIVINHACAO)
-        mensagens.enviar_texto(self.conn, self.adivinhacao)
+    # envia uma imagem para o cliente
+    def enviar_imagem(self, img):
+        mensagens.enviar_imagem(self.conn, img)
 
-    def esperando_imagem(self):
-        return self.esperando_imagem
-
-    def esperando_adivinhacao(self):
-        return self.esperando_adivinhacao
-
-    def possui_imagem(self):
-        if self.img:
-            return True
-        return False
-
-    def possui_adivinhacao(self):
-        if self.adivinhacao != "":
-            return True
-        return False
+    # envia uma adivinhação para o cliente
+    def enviar_adivinhacao(self, adivinhacao):
+        mensagens.enviar_texto(self.conn, adivinhacao)
 
     def deletar_imagem(self):
-        self.img = None
+        self.imagem = None
 
     def deletar_adivinhacao(self):
         self.adivinhacao = ""
@@ -106,8 +91,35 @@ class ClienteServidor:
     def set_vivo(self, vivo):
         self.vivo = vivo
 
+    def set_veredito(self, veredito):
+        self.veredito = veredito
+
+    def set_esperando_veredito(self, esperando_veredito):
+        self.esperando_veredito = esperando_veredito
+
+    def set_esperando_imagem(self, esperando_imagem):
+        self.esperando_imagem = esperando_imagem
+
+    def set_esperando_adivinhacao(self, esperando_adivinhacao):
+        self.esperando_adivinhacao = esperando_adivinhacao
+
     def get_addr(self):
         return self.addr
 
-    def get_img(self):
-        return self.img
+    def get_imagem(self):
+        return self.imagem
+
+    def get_adivinhacao(self):
+        return self.adivinhacao
+
+    def get_veredito(self):
+        return self.veredito
+
+    def get_esperando_veredito(self):
+        return self.esperando_veredito
+
+    def get_esperando_imagem(self):
+        return self.esperando_imagem
+
+    def get_esperando_adivinhacao(self):
+        return self.esperando_adivinhacao
