@@ -7,12 +7,10 @@ import tkinter as tk
 import queue
 
 from root.Imagens import drawing_app
-from root.Imagens import drawing_tools
-from root.Imagens import chat_widget
 
 # define a porta, o IP e a tupla com o endereço do servidor
 PORT = 5050
-SERVER = "192.168.15.55"
+SERVER = "127.0.1.1"
 ADDR = (SERVER, PORT)
 
 # define a categoria do socket como IPv4 e o métdo dele
@@ -100,7 +98,7 @@ def listen_for_server():
 
 IS_GUESSER = False
 # para alternação entre o modo desengista e adivinhador
-if len(sys.argv) > 1 and sys.argv[1].lower == '--guesser':
+if len(sys.argv) > 1 and sys.argv[1].lower() == '--guesser':
     IS_GUESSER = True
     print("Modo: ADIVINHADOR (Guesser)")
 else:
@@ -117,7 +115,7 @@ app.check_gui_queue()
 
 threading.Thread(target=listen_for_server, args=(cliente,)).start()
 
-threading.Thread(target=cliente_vivo()).start()
+threading.Thread(target=cliente_vivo).start()
 
 # iniciar o loop principal da GUI
 root.mainloop()

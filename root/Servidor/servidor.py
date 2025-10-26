@@ -128,10 +128,12 @@ def adivinhar(verificador, adivinhacao):
                     if verificador.get_veredito():
                         return 1
                     return 0
+    return None
+
 
 def cliente_vivo(cliente, tempo):
     tempo_atual = time.time()
-    if(tempo_atual - tempo > 1):
+    if tempo_atual - tempo > 1:
         cliente.cliente_vivo()
         return tempo_atual
     return tempo

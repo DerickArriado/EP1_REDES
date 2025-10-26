@@ -1,10 +1,8 @@
 import os
-import time
 from tkinter import filedialog, messagebox
-from save_png import save_canvas_as_png
-import mensagens
+from .save_png import save_canvas_as_png
+from root.Comunicação import mensagens
 
-mensagens_handle = mensagens.Mensagens()
 
 class ImageHandler:
     def __init__(self, canvas, client_socket, msg_handler):
@@ -36,16 +34,10 @@ class ImageHandler:
             
             with open(temp_filepath, "rb") as file:
                 image_bytes = file.read()
-            
-            # enviar sinalização de início de imagem (texto)
-            mensagens_handle.enviar(self.client, mensagens_handle.IMAGE_START_MESSAGE)
-            
+
             # enviar o tamanho da imagem (já tratado pelo enviar_binario)
             # enviar a imagem em bytes (BINÁRIO)
-            mensagens_handle.enviar_bytes(self.client, image_bytes)
-            
-            # enviar sinalização de fim de imagem (texto)
-            mensagens_handle.enviar(self.client, mensagens_handle.IMAGE_END_MESSAGE)
+            mensagens.enviar_imagem(self.client, image_bytes)
             
             messagebox.showinfo("Success", f"Image sent! Size: {len(image_bytes)} bytes")
             

@@ -8,7 +8,7 @@ O jogador utiliza o canvas para desenha
 - Ferramentad: desenho, borracha, espessura do lápis, escolha da cor, apagar tudo, e salvar png
 - Ao finalizar, o jogador salva o desenho
 
-![Logo da empresa](img.png)
+![Logo da empresa](root/img.png)
 
 **Palpite:** o adversário recebe o desenho e insere o que acha em um campo de texto, confirmando
 

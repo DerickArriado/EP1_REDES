@@ -1,7 +1,9 @@
 import tkinter as tk
-from chat_widget import ChatWidget
-from image_handler import ImageHandler
-from drawing_tools import DrawingTools
+
+from .image_handler import ImageHandler
+from .chat_widget import ChatWidget
+from .drawing_tools import DrawingTools
+
 from PIL import Image, ImageTk
 import os
 import queue
