@@ -24,9 +24,6 @@ class ClienteServidor:
             print(f"\n|Cliente Morreu| {self.addr} desconectado")
             self.conectado = False
 
-    def servidor_vivo(self):
-        mensagens.enviar_texto(self.conn, mensagens.ALIVE_MESSAGE)
-
     # avisa o cliente que a partida foi iniciada
     def partida_iniciada(self):
         mensagens.enviar_texto(self.conn, mensagens.PARTIDA_INICIADA)

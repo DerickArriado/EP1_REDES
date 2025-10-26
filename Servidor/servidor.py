@@ -73,15 +73,16 @@ def iniciar_partida(primeiro_cliente, segundo_cliente):
                 case 4:
                     if pontos_primeiro > pontos_segundo:
                         print(f"\n{primeiro_cliente.get_addr()} ganhou!")
-                        partida_em_progresso = False
                     elif pontos_segundo > pontos_primeiro:
                         print(f"\n{segundo_cliente.get_addr()} ganhou!")
-                        partida_em_progresso = False
                     else:
-                        etapa = 0
+                        print("\nEmpate")
+                    partida_em_progresso = False
                 case 0:
                     if primeiro_cliente.get_imagem():
                         etapa = 1
+                        segundo_cliente.enviar_texto(mensagens.ENVIANDO_IMAGEM)
+                        segundo_cliente.enviar_imagem(primeiro_cliente.get_imagem())
                     elif not primeiro_cliente.get_esperando_imagem():
                         primeiro_cliente.pedir_imagem()
                 case 1:
@@ -139,16 +140,14 @@ def handle_client(cliente):
     conectado = True
     tempo = time.time()
     while conectado:
-        tempo = cliente_vivo(cliente, tempo)
+        if not cliente.get_esperando_adivinhacao() and not cliente.get_esperando_imagem():
+            tempo = cliente_vivo(cliente, tempo)
         if not cliente.get_conectado():
             desconectar_cliente(cliente)
             conectado = False
         else:
             msg = cliente.receber_texto()
             match msg:
-                case None:
-                    pass
-
                 case mensagens.ALIVE_MESSAGE:
                     cliente.set_vivo(5)
 
@@ -163,14 +162,14 @@ def handle_client(cliente):
                 case mensagens.ENVIANDO_IMAGEM:
                     cliente.salvar_imagem()
 
+                case mensagens.ENVIANDO_ADIVINHACAO:
+                    cliente.salvar_adivinhacao()
+
                 case mensagens.ESPERANDO_IMAGEM:
                     cliente.set_esperando_imagem(True)
 
                 case mensagens.ESPERANDO_ADIVINHACAO:
                     cliente.set_esperando_adivinhacao(True)
-
-                case mensagens.ENVIANDO_ADIVINHACAO:
-                    cliente.salvar_adivinhacao()
 
                 case mensagens.ADIVINHACAO_CORRETA:
                     cliente.set_veredito(True)
