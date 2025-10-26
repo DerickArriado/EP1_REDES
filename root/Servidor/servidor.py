@@ -162,10 +162,14 @@ def handle_client(cliente):
                     clientes_prontos.append(cliente)
 
                 case mensagens.ENVIANDO_IMAGEM:
-                    cliente.salvar_imagem()
+                    img_bytes = mensagens.receber_imagem(cliente.conn)
+                    if img_bytes:
+                        cliente.salvar_imagem(img_bytes)
 
                 case mensagens.ENVIANDO_ADIVINHACAO:
-                    cliente.salvar_adivinhacao()
+                    adv = mensagens.receber(cliente.conn)
+                    if adv:
+                        cliente.salvar_adivinhacao(adv)
 
                 case mensagens.ESPERANDO_IMAGEM:
                     cliente.set_esperando_imagem(True)

@@ -88,6 +88,10 @@ def listen_for_server():
 
                 case mensagens.ENVIANDO_IMAGEM:
                     print("Servidor está mandando uma mensagem")
+                    if receber_e_salvar_imagem():
+                        print("Imagem recebida.")
+                    else:
+                        print("Erro ao receber imagem.")
 
                 case mensagens.ENVIANDO_ADIVINHACAO:
                     print("Servidor está enviando uma adivinhação")

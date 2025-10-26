@@ -46,7 +46,7 @@ class ClienteServidor:
     def receber_texto(self):
         msg = mensagens.receber(self.conn)
         if msg:
-            print(f"\n|{self.addr()}: {msg}|")
+            print(f"\n|{self.addr}: {msg}|")
             return msg
         return None
 
