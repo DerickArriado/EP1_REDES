@@ -1,51 +1,54 @@
 import socket
 import time
-import mensagens
+from root.Comunicação import mensagens
 import sys
-import os 
 import threading
 import tkinter as tk
 import queue
-import drawing_app
+
+from root.Imagens import drawing_app
+from root.Imagens import drawing_tools
+from root.Imagens import chat_widget
 
 # define a porta, o IP e a tupla com o endereço do servidor
 PORT = 5050
-SERVER = "127.0.1.1"
+SERVER = "192.168.15.55"
 ADDR = (SERVER, PORT)
 
 # define a categoria do socket como IPv4 e o métdo dele
-client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+cliente = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 # conecta ao servidor
-client.connect(ADDR)
+cliente.connect(ADDR)
 
-client_connected = True
-
+#variável global que indica se o cliente está conectado ou não
+cliente_conectado = True
+recebendo_imagem = False
+recebendo_adivinhacao = False
 RECEIVED_IMG_PATH = "received_drawing.png"
 
 # fila para comunicação entre threads
 gui_queue = queue.Queue()
 
-def keep_alive():
-    global client_connected
+# avisa o servidor que o cliente está conectado
+def cliente_vivo():
+    mensagens.enviar(cliente, mensagens.ALIVE_MESSAGE)
+
+# executa funções a cada segundo
+def timer():
     tempo = time.time()
+    while True:
+        # verifica se um segundo decorreu ou não
+        tempo_atual = time.time()
+        if tempo_atual - tempo > 1:
+            tempo = tempo_atual
+            cliente_vivo()
+            # faz a thread dormir para não sobrecarregar o processador
+            time.sleep(0.1)
 
-    while client_connected:
-        tempoAtual = time.time()
-        if tempoAtual - tempo > 2:
-            try:
-                mensagens.enviar(client, mensagens.ALIVE_MESSAGE)
-                tempo = tempoAtual
-            except (socket.error, ConnectionResetError, OSError):
-                # se envio falhar significa q a outra thread ainda não atualizou, e sai
-                client_connected = False
-                print("Keep-alive falhou, encerrando thread.")
-                break
-            
-
-def receber_e_salvar_imagem(client_socket):
+def receber_e_salvar_imagem():
     print("Recebendo imagem do servidor...")
     try:
-        image_bytes = mensagens.receber_imagem(client_socket)
+        image_bytes = mensagens.receber_imagem(cliente)
         if image_bytes:
             with open(RECEIVED_IMG_PATH, "wb") as f:
                 f.write(image_bytes)
@@ -61,51 +64,39 @@ def receber_e_salvar_imagem(client_socket):
         print(f"Erro ao salvar a imagem recebida: {e}")
         return False
 
-def listen_for_server(client_socket):
+def listen_for_server():
     """Loop principal para escutar o servidor."""
-    global client_connected
+    global cliente_conectado
     receiving_image = False
-    
+
     while True:
         if receiving_image:
-            # MODO BINÁRIO: Receber a imagem e salvar.
-            if receber_e_salvar_imagem(client_socket):
-                # Se o recebimento binário for bem-sucedido, espere pelo !IMAGE_END (texto)
-                pass # A próxima iteração lerá o !IMAGE_END
-            receiving_image = False # Volta para modo de texto
-            
+            receber_e_salvar_imagem(cliente)
         else:
-            # MODO TEXTO: Receber comandos ou mensagens
-            msg = mensagens.receber(client_socket)
-            
-            if msg == mensagens.IMAGE_START_MESSAGE:
-                print("Servidor sinalizou início de imagem. Preparando para receber binário.")
-                receiving_image = True
-                continue
-                
-            elif msg == mensagens.IMAGE_END_MESSAGE:
-                print("Fim da transmissão de imagem.")
-                # A imagem já foi salva na etapa anterior.
-                continue
+            msg = mensagens.receber(cliente)
+            match msg:
+                case mensagens.PARTIDA_INICIADA:
+                    print("Partida iniciada")
 
-            elif msg == mensagens.ALIVE_MESSAGE:
-                # Mensagem de keep-alive do servidor
-                continue
-            
-            elif msg == mensagens.DISCONNECT_MESSAGE:
-                print("Servidor desconectou.")
-                break
-                
-            elif msg:
-                print(f"Mensagem do servidor: {msg}")
+                case mensagens.PARTIDA_ENCERRADA:
+                    print("A partida foi encerrada")
 
-            else:
-                # Conexão perdida
-                print("Conexão com servidor perdida.")
-                break
-    
-    client_socket.close()
-    client_connected = False
+                case mensagens.ESPERANDO_IMAGEM:
+                    print("Servidor está pedindo que uma imagem seja enviada")
+                    continue
+
+                case mensagens.ESPERANDO_ADIVINHACAO:
+                    print("Servidor está pedindo que uma adivinhação seja enviada")
+
+                case mensagens.ENVIANDO_IMAGEM:
+                    print("Servidor está mandando uma mensagem")
+
+                case mensagens.ENVIANDO_ADIVINHACAO:
+                    print("Servidor está enviando uma adivinhação")
+
+
+    cliente.close()
+    cliente_conectado = False
 
 IS_GUESSER = False
 # para alternação entre o modo desengista e adivinhador
@@ -116,7 +107,7 @@ else:
     print("Modo: DESENHISTA (Drawer)")
 
 root = tk.Tk()
-app = drawing_app.DrawingApp(root, client, mensagens, gui_queue)
+app = drawing_app.DrawingApp(root, cliente, mensagens, gui_queue)
 
 if IS_GUESSER:
     app.set_guesser_mode()
@@ -124,10 +115,9 @@ if IS_GUESSER:
 # iniciar mecanismo de polling da GUI
 app.check_gui_queue()
 
+threading.Thread(target=listen_for_server, args=(cliente,)).start()
 
-threading.Thread(target=listen_for_server, args=(client,)).start()
-
-threading.Thread(target=keep_alive).start()
+threading.Thread(target=cliente_vivo()).start()
 
 # iniciar o loop principal da GUI
 root.mainloop()
