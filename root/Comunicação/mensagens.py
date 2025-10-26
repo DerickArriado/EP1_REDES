@@ -35,9 +35,15 @@ def enviar_texto(conn, msg):
     # envia a mensagem
     conn.send(enviar(conn, msg))
 
-def enviar_imagem(conn, msg):
-    # envia todos os bytes da imagem
-    conn.sendall(enviar(conn, msg))
+def enviar_imagem(conn, image_bytes):
+    # calcula o tamanho da imagem
+    tamanho_msg = str(len(image_bytes)).encode(FORMAT)
+    # ajusta para HEADER
+    tamanho_msg += b' ' * (HEADER - len(tamanho_msg))
+    # envia o tamanho
+    conn.send(tamanho_msg)
+    # envia os bytes da imagem
+    conn.sendall(image_bytes)
 
 def receber(conn):
     try:

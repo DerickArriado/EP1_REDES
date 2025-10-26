@@ -69,7 +69,7 @@ def listen_for_server():
 
     while True:
         if receiving_image:
-            receber_e_salvar_imagem(cliente)
+            receber_e_salvar_imagem()
         else:
             msg = mensagens.receber(cliente)
             match msg:
@@ -113,7 +113,7 @@ if IS_GUESSER:
 # iniciar mecanismo de polling da GUI
 app.check_gui_queue()
 
-threading.Thread(target=listen_for_server, args=(cliente,)).start()
+threading.Thread(target=listen_for_server).start()
 
 threading.Thread(target=cliente_vivo).start()
 
