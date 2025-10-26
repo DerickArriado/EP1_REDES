@@ -44,7 +44,7 @@ def receber(conn):
         # recebe e decifra a mensagem de tamanho no formato escolhido
         tamanho_msg = conn.recv(HEADER).decode(FORMAT)
         # converte o tamanho para int
-        tamanho_msg = int(tamanho_msg)
+        tamanho_msg = len(tamanho_msg)
         #verifica se a mensagem está vazia
         if not tamanho_msg:
             return None
