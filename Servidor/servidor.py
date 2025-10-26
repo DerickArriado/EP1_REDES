@@ -2,11 +2,9 @@ import socket
 import threading
 import time
 import sys
-from functools import partial
-
 import cliente_servidor
-import mensagens
-from math import floor
+from root.Comunicação import mensagens
+
 
 PORT = 5050
 SERVER = socket.gethostbyname(socket.gethostname())
@@ -68,16 +66,16 @@ def iniciar_partida(primeiro_cliente, segundo_cliente):
         # verifica se os dois clientes estão conectados
         if primeiro_cliente not in clientes_em_partida or segundo_cliente not in clientes_em_partida:
             partida_em_progresso = False
-            print(f"|Partida encerrada| {primeiro_cliente.get_addr()} ou {segundo_cliente.get_addr()} se desconectou")
+            print(f"\nPartida encerrada| {primeiro_cliente.get_addr()} ou {segundo_cliente.get_addr()} se desconectou")
         else:
             match etapa:
                 # as etapas a seguir estão suscetíveis à race condition
                 case 4:
                     if pontos_primeiro > pontos_segundo:
-                        print(f"{primeiro_cliente.get_addr()} ganhou!")
+                        print(f"\n{primeiro_cliente.get_addr()} ganhou!")
                         partida_em_progresso = False
                     elif pontos_segundo > pontos_primeiro:
-                        print(f"{segundo_cliente.get_addr()} ganhou!")
+                        print(f"\n{segundo_cliente.get_addr()} ganhou!")
                         partida_em_progresso = False
                     else:
                         etapa = 0
@@ -92,7 +90,7 @@ def iniciar_partida(primeiro_cliente, segundo_cliente):
                         etapa = 2
                         primeiro_cliente.deletar_imagem()
                         segundo_cliente.deletar_adivinhacao()
-                        print(f"Pontos de {segundo_cliente.get_addr()}: {pontos_segundo}")
+                        print(f"\nPontos de {segundo_cliente.get_addr()}: {pontos_segundo}")
                     elif not segundo_cliente.get_esperando_adivinhacao():
                         segundo_cliente.pedir_adivinhacao()
                 case 2:
@@ -106,7 +104,7 @@ def iniciar_partida(primeiro_cliente, segundo_cliente):
                         etapa = 4
                         segundo_cliente.deletar_imagem()
                         primeiro_cliente.deletar_adivinhacao()
-                        print(f"Pontos de {primeiro_cliente.get_addr()}: {pontos_primeiro}")
+                        print(f"\nPontos de {primeiro_cliente.get_addr()}: {pontos_primeiro}")
                     elif not primeiro_cliente.get_esperando_adivinhacao():
                         primeiro_cliente.pedir_adivinhacao()
     # avisa os clientes que a partida foi encerrada
@@ -130,12 +128,19 @@ def adivinhar(verificador, adivinhacao):
                         return 1
                     return 0
 
-
+def cliente_vivo(cliente, tempo):
+    tempo_atual = time.time()
+    if(tempo_atual - tempo > 1):
+        cliente.cliente_vivo()
+        return tempo_atual
+    return tempo
 
 def handle_client(cliente):
     conectado = True
+    tempo = time.time()
     while conectado:
-        if not cliente.cliente_vivo():
+        tempo = cliente_vivo(cliente, tempo)
+        if not cliente.get_conectado():
             desconectar_cliente(cliente)
             conectado = False
         else:
@@ -149,6 +154,7 @@ def handle_client(cliente):
 
                 case mensagens.DISCONNECT_MESSAGE:
                     desconectar_cliente(cliente)
+                    cliente.set_conectado(False)
                     conectado = False
 
                 case mensagens.PRONTO_PARA_JOGAR:
@@ -188,19 +194,14 @@ def busca_clientes():
         # inicia uma thread para executar as funções relacionadas a cada cliente
         threading.Thread(target=handle_client, args=(cliente,)).start()
 
-# envia uma confirmação de que o servidor está ligado para todos os clientes
-def servidor_vivo():
-    for cliente in clientes_conectados[:]:  # cópia da lista para evitar problemas ao remover
-        cliente.servidor_vivo()
-
 # imprime informações relevantes do servidor
 def imprime_status():
     # escreve o número de conexões ativas e o horário em que a verificação foi feita
     status_msg = (f"|Conexões Ativas|: {len(clientes_conectados)} "
-                  f"|Partidas em andamento|: {floor(len(clientes_prontos)/2)} "
+                  f"|Partidas em andamento|: {len(clientes_em_partida)/2} "
                   f"|Última verificação|: {time.strftime('%H:%M:%S')}")
     # sobrescreve o texto antigo com os valores atuais
-    sys.stdout.write('\r' + status_msg + ' ' * 30)
+    sys.stdout.write('\r' + status_msg + '' * 10)
     sys.stdout.flush()
 
 # executa funções a cada segundo
@@ -211,7 +212,6 @@ def timer():
         tempo_atual = time.time()
         if tempo_atual - tempo > 1:
             tempo = tempo_atual
-            servidor_vivo()
             imprime_status()
             buscar_partida()
             # faz a thread dormir para não sobrecarregar o processador

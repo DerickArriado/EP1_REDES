@@ -1,4 +1,4 @@
-import mensagens
+from root.Comunicação import mensagens
 
 class ClienteServidor:
 
@@ -12,6 +12,7 @@ class ClienteServidor:
         self.veredito = False
         self.imagem = b""
         self.adivinhacao = ""
+        self.conectado = True
 
 
     def fechar_conexao(self):
@@ -20,9 +21,8 @@ class ClienteServidor:
     def cliente_vivo(self):
         self.vivo -= 1
         if self.vivo == 0:
-            print(f"|Cliente Morreu| {self.addr} desconectado")
-            return False
-        return True
+            print(f"\n|Cliente Morreu| {self.addr} desconectado")
+            self.conectado = False
 
     def servidor_vivo(self):
         mensagens.enviar_texto(self.conn, mensagens.ALIVE_MESSAGE)
@@ -49,9 +49,8 @@ class ClienteServidor:
     def receber_texto(self):
         msg = mensagens.receber(self.conn)
         if msg:
-            print(f"|{self.addr()}: {msg}|")
+            print(f"\n|{self.addr()}: {msg}|")
             return msg
-        print("|Erro ao receber mensagem|")
         return None
 
     # recebe uma imagem do cliente e salva na variável img
@@ -59,7 +58,7 @@ class ClienteServidor:
         self.imagem = mensagens.receber_imagem(self.conn)
         self.esperando_imagem = False
         if self.imagem:
-            print(f"|{self.addr}| Recebido {len(self.imagem)} bytes de imagem.")
+            print(f"\n|{self.addr}| Recebido {len(self.imagem)} bytes de imagem.")
 
     # recebe uma adivinhação do cliente e salva na variável adivinhação
     def salvar_adivinhacao(self):
@@ -67,9 +66,9 @@ class ClienteServidor:
         self.esperando_adivinhacao = False
         if self.adivinhacao is not None:
             self.adivinhacao = adivinhacao
-            print(f"|Adivinhacao recebida| de {self.addr}|")
+            print(f"\n|Adivinhacao recebida| de {self.addr}")
         else:
-            print("|Erro ao receber adivinhação|")
+            print(f"\n|Erro ao receber adivinhação| de {self.addr}")
 
     def enviar_texto(self, msg):
         mensagens.enviar_texto(self.conn, msg)
@@ -103,6 +102,9 @@ class ClienteServidor:
     def set_esperando_adivinhacao(self, esperando_adivinhacao):
         self.esperando_adivinhacao = esperando_adivinhacao
 
+    def set_conectado(self,conectado):
+        self.conectado = conectado
+
     def get_addr(self):
         return self.addr
 
@@ -123,3 +125,6 @@ class ClienteServidor:
 
     def get_esperando_adivinhacao(self):
         return self.esperando_adivinhacao
+
+    def get_conectado(self):
+        return self.conectado
