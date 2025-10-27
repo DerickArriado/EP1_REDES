@@ -1,6 +1,7 @@
 import socket
 import time
 from root.Comunicação import mensagens
+from root.Comunicação.mensagens import PARTIDA_INICIADA
 from root.Servidor import cliente_servidor
 import sys
 import threading
@@ -10,7 +11,7 @@ from root.Imagens import drawing_app
 
 # define a porta, o IP e a tupla com o endereço do servidor
 PORT = 5050
-SERVER = "192.168.15.24"
+SERVER = ""
 ADDR = (SERVER, PORT)
 
 # define a categoria do socket como IPv4 e o métdo dele
@@ -48,6 +49,9 @@ def input_usuario():
         if input("Gostaria de sair? (S/N)\n").upper() == "S":
             cliente.desconectar()
 
+def adivinhar():
+    return input("Use uma única frase para adivinhar o desenho\n")
+
 def mensagens_servidor():
     while cliente.get_conectado():
         if not cliente.get_conectado():
@@ -58,26 +62,28 @@ def mensagens_servidor():
             msg = mensagens.receber(socket_cliente)
             match msg:
                 case mensagens.PARTIDA_INICIADA:
+                    print("|PARTIDA_INICIADA|")
                     cliente.set_em_partida(True)
                     cliente.set_esperando_partida(False)
 
                 case mensagens.PARTIDA_ENCERRADA:
+                    print("|PARTIDA_ENCERRADA|")
                     cliente.set_em_partida(False)
 
                 case mensagens.ESPERANDO_IMAGEM:
-                    # Servidor está esperando que uma imagem seja enviada
-                    ferramenta_desenho()
+                    print("|O servidor está esperando que uma imagem seja enviada|")
+                    #ferramenta_desenho()
 
                 case mensagens.ESPERANDO_ADIVINHACAO:
-                    # O servidor está esperando que uma adivinhação seja enviada
-                    cliente.enviar_adivinhacao(AAAAAAAAAAAAAAA)
+                    print("|O servidor está esperando que uma adivinhação seja enviada|")
+                    cliente.enviar_adivinhacao(adivinhar())
 
                 case mensagens.ENVIANDO_IMAGEM:
-                    # O servidor está mandando uma imagem
+                    print("|O servidor está enviando uma imagem|")
                     cliente.salvar_imagem()
 
                 case mensagens.ENVIANDO_ADIVINHACAO:
-                    # O servidor está enviando uma adivinhação
+                    print("|O servidor está enviando uma adivinhação|")
                     cliente.salvar_adivinhacao()
 
 def ferramenta_desenho():
@@ -90,7 +96,7 @@ def ferramenta_desenho():
         print("Modo: DESENHISTA (Drawer)")
 
     root = tk.Tk()
-    app = drawing_app.DrawingApp(root, socket_cliente, mensagens, gui_queue)
+    app = drawing_app.DrawingApp(root, cliente, gui_queue)
 
     if IS_GUESSER:
         app.set_guesser_mode()
@@ -106,5 +112,3 @@ def criar_threads():
     threading.Thread(target=estou_vivo).start()
 
 criar_threads()
-
-
