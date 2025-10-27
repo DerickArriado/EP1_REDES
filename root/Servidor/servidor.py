@@ -6,7 +6,7 @@ import cliente_servidor
 from root.Comunicação import mensagens
 
 # define a porta, o IP e a tupla com o endereço do servidor
-PORT = 5050
+PORT = 50500
 SERVER = socket.gethostbyname(socket.gethostname())
 ADDR = (SERVER, PORT)
 
@@ -46,6 +46,7 @@ def buscar_partida():
         clientes_em_partida.append(primeiro_cliente)
         clientes_em_partida.append(segundo_cliente)
         # inicia uma thread para organizar a partida entre os dois clientes
+        time.sleep(0.1)
         threading.Thread(target=iniciar_partida, args=(primeiro_cliente, segundo_cliente)).start()
 
 def encerrar_partida(primeiro_cliente, segundo_cliente):
@@ -201,6 +202,7 @@ def imprime_status():
     # escreve o número de conexões ativas e o horário em que a verificação foi feita
     status_msg = (f"|Conexões Ativas|: {len(clientes_conectados)} "
                   f"|Partidas em andamento|: {len(clientes_em_partida)/2} "
+                  f"|Jogadores prontos|: {len(clientes_prontos)} "
                   f"|Última verificação|: {time.strftime('%H:%M:%S')}")
     # sobrescreve o texto antigo com os valores atuais
     sys.stdout.write('\r' + status_msg + '' * 10)
