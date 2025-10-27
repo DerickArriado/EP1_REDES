@@ -1,19 +1,16 @@
 import tkinter as tk
 
 from .image_handler import ImageHandler
-from .chat_widget import ChatWidget
 from .drawing_tools import DrawingTools
 
 from PIL import Image, ImageTk
-import os
 import queue
 
 class DrawingApp:
-    def __init__(self, root, client_socket, msg_handler, event_queue):
+    def __init__(self, root, cliente, event_queue):
         self.root = root
         self.root.title("Drawing App")
-        self.client = client_socket
-        self.msg_handler = msg_handler
+        self.cliente = cliente
         self.event_queue = event_queue
         
         # Inicializa o canvas
@@ -23,9 +20,8 @@ class DrawingApp:
         # Inicializa componentes
         self.setup_toolbar()
         self.drawing_tools = DrawingTools(self.canvas)
-        self.image_handler = ImageHandler(self.canvas, self.client, self.msg_handler)
-        self.chat_widget = ChatWidget(root)
-        
+        self.image_handler = ImageHandler(self.canvas, self.cliente)
+
         # Configura bindings
         self.setup_bindings()
 
@@ -112,8 +108,6 @@ class DrawingApp:
                 
                 if event['type'] == 'IMAGE_RECEIVED':
                     self.load_image_to_canvas(event['path'])
-                
-                # Adicione outros tipos de eventos de rede aqui (ex: CHAT_MESSAGE)
                 
         except queue.Empty:
             pass # Nenhuma mensagem na fila, tudo bem.

@@ -1,15 +1,11 @@
 import os
 from tkinter import filedialog, messagebox
 from .save_png import save_canvas_as_png
-from root.Comunicação import mensagens
-
 
 class ImageHandler:
-    def __init__(self, canvas, client_socket, msg_handler):
+    def __init__(self, canvas, cliente):
         self.canvas = canvas
-        self.client = client_socket
-        self.mensagens = msg_handler
-
+        self.cliente = cliente
     def save_as_png(self):
         """Salva o canvas como PNG"""
         file_path = filedialog.asksaveasfilename(
@@ -37,7 +33,7 @@ class ImageHandler:
 
             # enviar o tamanho da imagem (já tratado pelo enviar_binario)
             # enviar a imagem em bytes (BINÁRIO)
-            mensagens.enviar_imagem(self.client, image_bytes)
+            self.cliente.enviar_imagem(image_bytes)
             
             messagebox.showinfo("Success", f"Image sent! Size: {len(image_bytes)} bytes")
             
