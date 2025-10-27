@@ -6,6 +6,8 @@ class ClienteServidor:
         self.conn = conn
         self.addr = addr
         self.vivo = 5
+        self.em_partida = False
+        self.esperando_partida = False
         self.esperando_veredito = False
         self.esperando_imagem = False
         self.esperando_adivinhacao = False
@@ -18,11 +20,20 @@ class ClienteServidor:
     def fechar_conexao(self):
         self.conn.close()
 
+    def desconectar(self):
+        mensagens.enviar_texto(self.conn, mensagens.DISCONNECT_MESSAGE)
+        self.conn.close()
+        self.conectado = False
+
     def cliente_vivo(self):
         self.vivo -= 1
         if self.vivo == 0:
             print(f"\n|Cliente Morreu| {self.addr} desconectado")
             self.conectado = False
+
+    def cliente_pronto(self):
+        self.esperando_partida = True
+        mensagens.enviar_texto(self.conn, mensagens.PRONTO_PARA_JOGAR)
 
     # avisa o cliente que a partida foi iniciada
     def partida_iniciada(self):
@@ -46,7 +57,6 @@ class ClienteServidor:
     def receber_texto(self):
         msg = mensagens.receber(self.conn)
         if msg:
-            print(f"\n|{self.addr}: {msg}|")
             return msg
         return None
 
@@ -87,6 +97,12 @@ class ClienteServidor:
     def set_vivo(self, vivo):
         self.vivo = vivo
 
+    def set_em_partida(self, em_partida):
+        self.em_partida = em_partida
+
+    def set_esperando_partida(self, esperando_partida):
+        self.esperando_partida = esperando_partida
+
     def set_veredito(self, veredito):
         self.veredito = veredito
 
@@ -101,6 +117,12 @@ class ClienteServidor:
 
     def set_conectado(self,conectado):
         self.conectado = conectado
+
+    def get_em_partida(self):
+        return self.em_partida
+
+    def get_esperando_partida(self):
+        return self.esperando_partida
 
     def get_addr(self):
         return self.addr

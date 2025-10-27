@@ -5,7 +5,7 @@ import sys
 import cliente_servidor
 from root.Comunicação import mensagens
 
-
+# define a porta, o IP e a tupla com o endereço do servidor
 PORT = 5050
 SERVER = socket.gethostbyname(socket.gethostname())
 ADDR = (SERVER, PORT)
@@ -130,7 +130,6 @@ def adivinhar(verificador, adivinhacao):
                     return 0
     return None
 
-
 def cliente_vivo(cliente, tempo):
     tempo_atual = time.time()
     if tempo_atual - tempo > 1:
@@ -190,8 +189,6 @@ def busca_clientes():
     while True:
         # aceita pedidos de conexão com o servidor
         conn, addr = server.accept()
-        # coloca o tempo máximo de timeout do socket como 5 segundos
-        conn.settimeout(5)
         # cria um cliente
         cliente = cliente_servidor.ClienteServidor(conn, addr)
         # adiciona o cliente na lista de clientes
