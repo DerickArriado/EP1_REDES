@@ -60,7 +60,6 @@ def receber(conn):
         return msg
 
     except Exception as e:
-        print(f"Erro ao receber mensagem: {e}")
         return None
 
 def receber_imagem(conn):
@@ -89,5 +88,4 @@ def receber_imagem(conn):
         return bytes_recebidos
 
     except Exception as e:
-        print(f"Erro ao receber imagem: {e}")
         return None
