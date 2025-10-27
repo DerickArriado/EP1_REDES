@@ -1,17 +1,16 @@
 import socket
 import time
 from root.Comunicação import mensagens
-from root.Comunicação.mensagens import PARTIDA_INICIADA
+from root.Imagens import drawing_app
 from root.Servidor import cliente_servidor
 import sys
 import threading
 import tkinter as tk
 import queue
-from root.Imagens import drawing_app
 
 # define a porta, o IP e a tupla com o endereço do servidor
-PORT = 5050
-SERVER = ""
+PORT = 50500
+SERVER = "192.168.15.24"
 ADDR = (SERVER, PORT)
 
 # define a categoria do socket como IPv4 e o métdo dele
@@ -72,7 +71,7 @@ def mensagens_servidor():
 
                 case mensagens.ESPERANDO_IMAGEM:
                     print("|O servidor está esperando que uma imagem seja enviada|")
-                    #ferramenta_desenho()
+                    ferramenta_desenho()
 
                 case mensagens.ESPERANDO_ADIVINHACAO:
                     print("|O servidor está esperando que uma adivinhação seja enviada|")
