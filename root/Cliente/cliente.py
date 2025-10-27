@@ -1,127 +1,110 @@
 import socket
 import time
 from root.Comunicação import mensagens
+from root.Servidor import cliente_servidor
 import sys
 import threading
 import tkinter as tk
 import queue
-
 from root.Imagens import drawing_app
 
 # define a porta, o IP e a tupla com o endereço do servidor
 PORT = 5050
-SERVER = "127.0.1.1"
+SERVER = "192.168.15.24"
 ADDR = (SERVER, PORT)
 
 # define a categoria do socket como IPv4 e o métdo dele
-cliente = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+socket_cliente = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 # conecta ao servidor
-cliente.connect(ADDR)
+socket_cliente.connect(ADDR)
 
-#variável global que indica se o cliente está conectado ou não
-cliente_conectado = True
-recebendo_imagem = False
-recebendo_adivinhacao = False
+# cria uma instância de cliente_servidor
+cliente = cliente_servidor.ClienteServidor(socket_cliente, ADDR)
+
 RECEIVED_IMG_PATH = "received_drawing.png"
 
 # fila para comunicação entre threads
 gui_queue = queue.Queue()
 
 # avisa o servidor que o cliente está conectado
-def cliente_vivo():
-    mensagens.enviar(cliente, mensagens.ALIVE_MESSAGE)
-
-# executa funções a cada segundo
-def timer():
+def estou_vivo():
     tempo = time.time()
-    while True:
+    while cliente.get_conectado():
         # verifica se um segundo decorreu ou não
         tempo_atual = time.time()
         if tempo_atual - tempo > 1:
             tempo = tempo_atual
-            cliente_vivo()
+            cliente.enviar_texto(mensagens.ALIVE_MESSAGE)
             # faz a thread dormir para não sobrecarregar o processador
             time.sleep(0.1)
 
-def receber_e_salvar_imagem():
-    print("Recebendo imagem do servidor...")
-    try:
-        image_bytes = mensagens.receber_imagem(cliente)
-        if image_bytes:
-            with open(RECEIVED_IMG_PATH, "wb") as f:
-                f.write(image_bytes)
-            gui_queue.put({"type": "IMAGE_RECEIVED", "path": RECEIVED_IMG_PATH})
-            print(f"Imagem recebida e salva em {RECEIVED_IMG_PATH}")
-            # adicionar a lógica para exibir a imagem na GUI
-            # ou notificar o cliente que a imagem está pronta para ser adivinhada.
-            return True
-        else:
-            print("Falha ao receber bytes da imagem.")
-            return False
-    except Exception as e:
-        print(f"Erro ao salvar a imagem recebida: {e}")
-        return False
+def input_usuario():
+    resposta = input("Gostaria de entrar em uma partida? (S/N)\n")
+    if resposta.upper() == "S":
+        print("|Esperando partida começar|")
+        cliente.set_esperando_partida(True)
+        cliente.cliente_pronto()
+    elif resposta.upper() == "N":
+        if input("Gostaria de sair? (S/N)\n").upper() == "S":
+            cliente.desconectar()
 
-def listen_for_server():
-    """Loop principal para escutar o servidor."""
-    global cliente_conectado
-    receiving_image = False
-
-    while True:
-        if receiving_image:
-            receber_e_salvar_imagem()
+def mensagens_servidor():
+    while cliente.get_conectado():
+        if not cliente.get_conectado():
+            pass
+        elif not cliente.get_esperando_partida() and not cliente.get_em_partida():
+            input_usuario()
         else:
-            msg = mensagens.receber(cliente)
+            msg = mensagens.receber(socket_cliente)
             match msg:
                 case mensagens.PARTIDA_INICIADA:
-                    print("Partida iniciada")
+                    cliente.set_em_partida(True)
+                    cliente.set_esperando_partida(False)
 
                 case mensagens.PARTIDA_ENCERRADA:
-                    print("A partida foi encerrada")
+                    cliente.set_em_partida(False)
 
                 case mensagens.ESPERANDO_IMAGEM:
-                    print("Servidor está pedindo que uma imagem seja enviada")
-                    continue
+                    # Servidor está esperando que uma imagem seja enviada
+                    ferramenta_desenho()
 
                 case mensagens.ESPERANDO_ADIVINHACAO:
-                    print("Servidor está pedindo que uma adivinhação seja enviada")
+                    # O servidor está esperando que uma adivinhação seja enviada
+                    cliente.enviar_adivinhacao(AAAAAAAAAAAAAAA)
 
                 case mensagens.ENVIANDO_IMAGEM:
-                    print("Servidor está mandando uma mensagem")
-                    if receber_e_salvar_imagem():
-                        print("Imagem recebida.")
-                    else:
-                        print("Erro ao receber imagem.")
+                    # O servidor está mandando uma imagem
+                    cliente.salvar_imagem()
 
                 case mensagens.ENVIANDO_ADIVINHACAO:
-                    print("Servidor está enviando uma adivinhação")
+                    # O servidor está enviando uma adivinhação
+                    cliente.salvar_adivinhacao()
 
+def ferramenta_desenho():
+    IS_GUESSER = False
+    # para alternação entre o modo desenhista e adivinhador
+    if len(sys.argv) > 1 and sys.argv[1].lower() == '--guesser':
+        IS_GUESSER = True
+        print("Modo: ADIVINHADOR (Guesser)")
+    else:
+        print("Modo: DESENHISTA (Drawer)")
 
-    cliente.close()
-    cliente_conectado = False
+    root = tk.Tk()
+    app = drawing_app.DrawingApp(root, socket_cliente, mensagens, gui_queue)
 
-IS_GUESSER = False
-# para alternação entre o modo desengista e adivinhador
-if len(sys.argv) > 1 and sys.argv[1].lower() == '--guesser':
-    IS_GUESSER = True
-    print("Modo: ADIVINHADOR (Guesser)")
-else:
-    print("Modo: DESENHISTA (Drawer)")
+    if IS_GUESSER:
+        app.set_guesser_mode()
 
-root = tk.Tk()
-app = drawing_app.DrawingApp(root, cliente, mensagens, gui_queue)
+    # iniciar mecanismo de polling da GUI
+    app.check_gui_queue()
 
-if IS_GUESSER:
-    app.set_guesser_mode()
+    # iniciar o loop principal da GUI
+    root.mainloop()
 
-# iniciar mecanismo de polling da GUI
-app.check_gui_queue()
+def criar_threads():
+    threading.Thread(target=mensagens_servidor).start()
+    threading.Thread(target=estou_vivo).start()
 
-threading.Thread(target=listen_for_server).start()
-
-threading.Thread(target=cliente_vivo).start()
-
-# iniciar o loop principal da GUI
-root.mainloop()
+criar_threads()
 
 
